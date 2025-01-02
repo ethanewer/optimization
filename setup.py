@@ -7,7 +7,9 @@ setup(
     packages=find_packages(),
     ext_modules=[
         Pybind11Extension(
-            "lbfgs", ["optimization/lbfgs.cpp"], extra_compile_args=["-O3"]
+            "lbfgs",
+            ["optimization/lbfgs.cpp"],
+            extra_compile_args=["-O3", "-Ioptimization"],
         )
     ],
     cmdclass={"build_ext": build_ext},
