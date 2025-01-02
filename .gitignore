@@ -1,0 +1,5 @@
+build*
+dist*
+*__pycache__*
+lbfgs.cpython-312-darwin.so
+optimization.egg-info*
