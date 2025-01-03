@@ -2,11 +2,25 @@ from typing import Any, Callable, Sequence
 
 import numpy as np
 from lbfgs import fmin_lbfgs_float32, fmin_lbfgs_float64
+from numpy.typing import ArrayLike
+
+
+def use_float32(x: Any) -> bool:
+    array_types_strs = [
+        "<class 'jaxlib.xla_extension.ArrayImpl'>",
+        "<class 'numpy.ndarray'>",
+        "<class 'mlx.core.array'>",
+    ]
+
+    if str(type(x)) not in array_types_strs:
+        return False
+
+    return "float32" in str(x.dtype)
 
 
 def fmin_lbfgs(
-    value_and_grad: Callable[..., tuple[np.ndarray, np.ndarray]],
-    x: np.ndarray,
+    value_and_grad: Callable[..., tuple[ArrayLike, ArrayLike]],
+    x: ArrayLike,
     args: Sequence[Any] = (),
     history_size: int = 20,
     tol: float = 1e-4,
@@ -15,7 +29,12 @@ def fmin_lbfgs(
     beta: float = 0.5,
     max_ls_iters: int = 10,
 ) -> np.ndarray:  # type: ignore
-    if x.dtype == np.float32:
+    if str(type(x)) == "<class 'mlx.core.array'>":
+        from .mlx_util import mlx_to_numpy
+
+        value_and_grad = mlx_to_numpy(value_and_grad)
+
+    if use_float32(x):
         return fmin_lbfgs_float32(
             lambda x: value_and_grad(x, *args),
             x,
@@ -26,7 +45,7 @@ def fmin_lbfgs(
             beta,
             max_ls_iters,
         )
-    elif x.dtype == np.float64:
+    else:
         return fmin_lbfgs_float64(
             lambda x: value_and_grad(x, *args),
             x,
@@ -37,8 +56,6 @@ def fmin_lbfgs(
             beta,
             max_ls_iters,
         )
-    else:
-        raise NotImplementedError("x must be a float32 or float64 array.")
 
 
 # def backtracking_line_search(

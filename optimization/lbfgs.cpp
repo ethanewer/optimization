@@ -31,6 +31,14 @@ std::tuple<T, T*> value_and_grad(
         throw std::invalid_argument("Returned arrays must be 1-dimensional.");
     }
 
+    if (!value_array.writeable()) {
+        value_array = py::array_t<T>(value_array.size(), value_array.data());
+    }
+
+    if (!grad_array.writeable()) {
+        grad_array = py::array_t<T>(grad_array.size(), grad_array.data());
+    }
+
     T value = *value_array.mutable_data();
     auto grad_info = grad_array.request();
     T* grad = new T[n];
@@ -112,6 +120,9 @@ py::array_t<T> fmin_lbfgs(
 ) { 
     if (x0.ndim() != 1) {
         throw std::invalid_argument("x must be 1-dimensional.");
+    }
+    if (!x0.writeable()) {
+        x0 = py::array_t<T>(x0.size(), x0.data());
     }
     const int n = x0.size();
     auto x0_info = x0.request();
